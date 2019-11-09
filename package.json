@@ -1,0 +1,26 @@
+{
+  "name": "restcore",
+  "version": "0.0.1",
+  "description": "REST wrapper for fetch implementations",
+  "main": "dist/restcore.js",
+  "scripts": {
+    "build": "concurrently 'npm:build:*'",
+    "build:babel": "NO_MINIFY=true rollup -c",
+    "build:babel:min": "rollup -c",
+    "build:no-babel": "NO_MINIFY=true NO_BABEL=true rollup -c",
+    "build:no-babel:min": "NO_BABEL=true rollup -c"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.7.2",
+    "@babel/preset-env": "^7.7.1",
+    "babel-eslint": "^10.0.3",
+    "babel-plugin-transform-async-to-promises": "^0.8.15",
+    "concurrently": "^5.0.0",
+    "eslint": "^6.6.0",
+    "rollup": "^1.26.3",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-terser": "^5.1.2"
+  }
+}
