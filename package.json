@@ -1,6 +1,6 @@
 {
-  "name": "restcore",
-  "version": "0.0.1",
+  "name": "@raisely/restcore",
+  "version": "0.0.2",
   "description": "REST wrapper for fetch implementations",
   "main": "dist/restcore.js",
   "scripts": {
@@ -10,7 +10,12 @@
     "build:no-babel": "NO_MINIFY=true NO_BABEL=true rollup -c",
     "build:no-babel:min": "NO_BABEL=true rollup -c"
   },
-  "author": "",
+  "files": [
+    "README.md",
+    "dist/*"
+  ],
+  "author": "Raisely",
+  "homepage": "https://github.com/raisely/restcore",
   "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.7.2",

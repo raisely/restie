@@ -4,7 +4,7 @@ Restcore is a restful-js/restangular inspired REST wrapper for `fetch` implement
 
 ## Installing
 
-`npm i -S restcore`
+`npm i -S @raisely/restcore`
 
 
 ## Building (developers)
