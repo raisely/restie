@@ -4,7 +4,7 @@ Resti is a restful-js/restangular inspired REST wrapper for `fetch` implementati
 
 ## Installing
 
-`npm i -S @raisely/resti`
+tba
 
 ## Building (developers)
 
@@ -12,4 +12,4 @@ Resti is a restful-js/restangular inspired REST wrapper for `fetch` implementati
 
 ## Usage
 
-Usage documentation and in-depth examples are coming over the next few days
+Usage documentation and in-depth examples are coming soon
