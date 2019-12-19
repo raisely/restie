@@ -3,24 +3,30 @@
 import qs from 'qs';
 
 /**
+ * Global mapping for content types
+ * @type {Object}
+ */
+const typeMap = {
+	'application/json': 'json',
+	'text/plain': 'text',
+};
+
+/**
  * Takes a raw fetch response and tries to resolve JSON or plaintext
  * @param  {Response} rawRepsonse Response object from fetch
  * @return {Promise<Object|String|null>}    Resolves with either
  */
-const getResultAsBestAttempt = async (rawRepsonse) => {
-	const supportedTypes = ['json', 'text'];
+const getResultAsBestAttempt = async (rawResponse) => {
+	const ContentType = rawResponse.headers.get('Content-Type');
 
-	for (let index = 0; index < supportedTypes.length; index++) {
-		const type = supportedTypes[index];
+	// use response content-type to try and detect parse type
+	const type = typeMap[ContentType] || 'text';
 
-		try {
-			// eslint-disable-next-line no-await-in-loop
-			return await rawRepsonse[type]();
-		// eslint-disable-next-line no-empty
-		} catch (e) {}
+	try {
+		return await rawResponse[type]();
+	} catch (e) {
+		return null;
 	}
-
-	return null;
 };
 
 /**

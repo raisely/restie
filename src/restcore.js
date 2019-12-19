@@ -3,8 +3,8 @@ import { basicRequestHandler } from './runtime';
 
 /**
  * Helper responsible for concatenating 
- * @param  {...[type]} paths [description]
- * @return {[type]}          [description]
+ * @param  {...String[]} paths Path name parts to concatenate
+ * @return {String}          Joined path url
  */
 const concatPaths = (...paths) => paths
 	.map(path => `${path}`.replace(/^\//, ''))
@@ -30,15 +30,18 @@ const getArgsWithOptionalPath = (argsAsArray) => {
  * @param  {ApiInstance} apiRef    The root api instance built
  * @param  {String} baseUrl   The root to append the modelBase to
  * @param  {String} modelBase The path/resource to append to the modelBase
+ * @param  {Object|null} parentRef Reference to the higher scoped entity. Returns null if parent is the api
  * @return {ModelInstance}           The model instance as a plain object
  */
-function buildModel(apiRef, baseUrl, modelBase) {
+function buildModel(apiRef, baseUrl, modelBase, parentRef = null) {
 	// concatenate the baseUrl passed with the specified root.
 	// In the case of the first model, baseUrl will always represent the
 	// unmodified REST api
 	const modelRoot = concatPaths(baseUrl, modelBase);
 
 	const modelInstance = {
+		// ensure that the root of the model is visible for manual debugging
+		url: modelRoot,
 		get(...args) {
 			const [path, params = {}, headers = {}] = getArgsWithOptionalPath(args);
 
@@ -100,12 +103,40 @@ function buildModel(apiRef, baseUrl, modelBase) {
 			});
 		},
 		// allow recursing
-		all: subModelBase => buildModel(apiRef, modelRoot, subModelBase),
+		all: subModelBase => buildModel(apiRef, modelRoot, subModelBase, modelInstance),
 		// allow recursing but with an additional child specifier
-		one: (modelBase, id) => buildModel(apiRef, baseUrl, concatPaths(modelBase, id)),
+		one: (modelBase, id) => buildDualModel(apiRef, modelRoot, modelBase, id, modelInstance),
+		// allow obtaining parentRef (if exists)
+		parent: () => parentRef,
+		// get a ref to this api (useful if not nested)
+		api: () => apiRef,
 	};
 
 	return modelInstance;
+}
+
+/**
+ * Builds a hidden parent model needed for correct parent accessor
+ * @param  {ApiInstance} apiRef    The root api instance built
+ * @param  {String} baseUrl   The root to append the modelBase to
+ * @param  {String} modelBase The path/resource to append to the modelBase
+ * @param  {String|null} childModel The optional child path
+ * @param  {Object|null} topParentRef Reference to the higher scoped entity. Returns null if parent is the api
+ * @return {ModelInstance}           The model instance as a plain object
+ */
+function buildDualModel(apiRef, currentRootUrl, modelBase, childModel, topParentRef) {
+	// build parent model
+	const hiddenParentRef = buildModel(apiRef, currentRootUrl, modelBase, topParentRef)
+
+	if (!childModel) {
+		// if no childModel is specified, only return single parent layer
+		return hiddenParentRef;
+	}
+
+	// otherwise, build and return child layer based off hidden parent
+	// NOTE: will access this function via recursion, but will bail out since no
+	// child is provided
+	return hiddenParentRef.one(childModel);
 }
 
 /**
@@ -119,7 +150,7 @@ const buildRestcore = baseUrl => ({
 	addRequestInterceptor(interceptor) { this.beforeSend = interceptor; },
 	addResponseInterceptor(interceptor) { this.afterReceive = interceptor; },
 	all(modelBase) { return buildModel(this, baseUrl, modelBase); },
-	one(modelBase, id) { return buildModel(this, baseUrl, concatPaths(modelBase, id)); },
+	one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
 	custom(modelBase) { return buildModel(this, baseUrl, modelBase); },
 });
 

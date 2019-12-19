@@ -1,11 +1,10 @@
-# restcore
+# resti
 
-Restcore is a restful-js/restangular inspired REST wrapper for `fetch` implementations, but without mutative effects.
+Resti is a restful-js/restangular inspired REST wrapper for `fetch` implementations, but without mutative effects.
 
 ## Installing
 
-`npm i -S @raisely/restcore`
-
+`npm i -S @raisely/resti`
 
 ## Building (developers)
 
