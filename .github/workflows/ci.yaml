@@ -19,7 +19,11 @@ jobs:
 
       - name: Install
         shell: bash
-        run: npm ci
+        run: npm i
+
+      - name: Build
+        shell: bash
+        run: npm run build
       
       - name: Test
         shell: bash
