@@ -1,4 +1,4 @@
-const restie = require('../dist/restcore');
+const restie = require('../dist/restie');
 const test = require('./helpers/assertions');
 const getServer = require('./helpers/testServer')();
 const fakeDB = require('./helpers/fakeDB');

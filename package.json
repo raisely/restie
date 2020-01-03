@@ -2,7 +2,7 @@
   "name": "@raisely/restie",
   "version": "0.0.1",
   "description": "REST wrapper for fetch implementations",
-  "main": "dist/restcore.js",
+  "main": "dist/restie.js",
   "scripts": {
     "test": "mocha ./spec/*.spec.js",
     "build": "concurrently 'npm:build:*'",

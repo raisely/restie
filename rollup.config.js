@@ -4,7 +4,7 @@ const avoidMinify = process.env.NO_MINIFY === 'true';
 
 function determineDestFileFromEnv() {
 	// output filename that's joined by dot-names
-	const fileParts = ['dist/restcore'];
+	const fileParts = ['dist/restie'];
 
 	if (!avoidBabel) {
 		fileParts.push('dist');
@@ -62,7 +62,7 @@ function determinePluginsFromEnv() {
 
 // configuration file
 module.exports = {
-	input: 'src/restcore.js',
+	input: 'src/restie.js',
 	output: {
 		file: determineDestFileFromEnv(),
 		format: 'cjs',

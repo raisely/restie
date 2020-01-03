@@ -1,7 +1,7 @@
 // core.spec.js
 
 const test = require('./helpers/assertions');
-const restcore = require('../dist/restcore');
+const restcore = require('../dist/restie');
 
 // tests happen without touching test server so this can be anything
 const getTestServerBaseUrl = () => `http://0.0.0.0:3000`;

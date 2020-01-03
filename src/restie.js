@@ -17,7 +17,8 @@ const concatPaths = (...paths) => paths
  * @return {Array}             Modified array representing the filtered arguments
  */
 const getArgsWithOptionalPath = (argsAsArray) => {
-	if (typeof argsAsArray[0] !== 'string' || typeof argsAsArray[0] !== 'number') {
+	const firstArgType = typeof argsAsArray[0];
+	if (firstArgType !== 'string' && firstArgType !== 'number' ) {
 		return [null, ...argsAsArray];
 	}
 
@@ -140,11 +141,11 @@ function buildDualModel(apiRef, currentRootUrl, modelBase, childModel, topParent
 }
 
 /**
- * Instance builder for restcore. Invoked as a function
+ * Instance builder for Restie. Invoked as a function
  * @param  {String} baseUrl The source url of the REST api or complex nested resource
  * @return {Object}         Object containing needed restful objects
  */
-const buildRestcore = baseUrl => ({
+const buildRestie = baseUrl => ({
 	baseUrl,
 	url: () => baseUrl,
 	addRequestInterceptor(interceptor) { this.beforeSend = interceptor; },
@@ -154,4 +155,4 @@ const buildRestcore = baseUrl => ({
 	custom(modelBase) { return buildModel(this, baseUrl, modelBase); },
 });
 
-export default buildRestcore;
+export default buildRestie;
