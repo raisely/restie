@@ -17,7 +17,7 @@ const concatPaths = (...paths) => paths
  * @return {Array}             Modified array representing the filtered arguments
  */
 const getArgsWithOptionalPath = (argsAsArray) => {
-	if (typeof argsAsArray[0] !== 'string') {
+	if (typeof argsAsArray[0] !== 'string' || typeof argsAsArray[0] !== 'number') {
 		return [null, ...argsAsArray];
 	}
 

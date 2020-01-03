@@ -1,6 +1,6 @@
 {
-  "name": "@raisely/restcore",
-  "version": "0.0.2",
+  "name": "@raisely/restie",
+  "version": "0.0.1",
   "description": "REST wrapper for fetch implementations",
   "main": "dist/restcore.js",
   "scripts": {
@@ -16,8 +16,7 @@
     "dist/*"
   ],
   "author": "Raisely",
-  "homepage": "https://github.com/raisely/restcore",
-  "license": "ISC",
+  "homepage": "https://github.com/raisely/restie",
   "devDependencies": {
     "@babel/core": "^7.7.2",
     "@babel/preset-env": "^7.7.1",
