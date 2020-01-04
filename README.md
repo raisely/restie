@@ -12,7 +12,7 @@ Restie is a restful-js/restangular inspired REST wrapper for `fetch` implementat
 
 Restie uses a non standardized software license called **Do No Harm**, which helps promote ethical use of this software, and at best, helps prevent non-ethically positioned third-parties from adopting it.
 
-Clause 9 of [The Open Source Definition](https://opensource.org/osd) states that you are free to use this software, along with this license with any currently [appproved OSI-compatible licenses](https://opensource.org/licenses/alphabetical); making it compatible with existing open software solutions already in your project. This license only limits inclusion based based on the actual project being developed.
+Clause 9 of [The Open Source Definition](https://opensource.org/osd) states that you are free to use this software, along with this license with any currently [appproved OSI-compatible licenses](https://opensource.org/licenses/alphabetical); making it compatible with existing open software solutions already in your project. This license only limits inclusion based on the actual project being developed.
 
 > The license must not place restrictions on other software that is distributed along with the licensed software. For example, the license must not insist that all other programs distributed on the same medium must be open-source software.
 
