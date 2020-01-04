@@ -16,10 +16,6 @@ Clause 9 of [The Open Source Definition](https://opensource.org/osd) states that
 
 > The license must not place restrictions on other software that is distributed along with the licensed software. For example, the license must not insist that all other programs distributed on the same medium must be open-source software.
 
-## Building (developers)
-
-`npm run build` - Will output dist files
-
 
 ## Usage
 
