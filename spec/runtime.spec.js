@@ -61,6 +61,56 @@ describe('runtime', () => {
 		}
 	});
 
+	it('can add and remove request interceptors', async () => {
+		const customHeaderKey = 'custom-header-x';
+
+		// isolated flag to monitor side effect of header
+		let receivedExpectedHeader = false;
+
+		const [apiUrl] = await getServer((app) => {
+			app.get('/test-intercept/request', (req, res) => {
+				receivedExpectedHeader = req.headers[customHeaderKey] === 'true';
+				res.end('Hey');
+			});
+		});
+
+		const restApi = restie(apiUrl);
+
+		// define custom interceptor. It's identity is based on it's own signature
+		const customInterceptor = options => ({ headers: { ...options.headers, [customHeaderKey]: true } });
+
+		// TEST: add interceptor
+		restApi.addRequestInterceptor(customInterceptor);
+		await restApi.one('test-intercept', 'request').get();
+		test.assert.strictEqual(receivedExpectedHeader, true, 'expected custom header but was not found');
+
+		// TEST: remove interceptor
+		restApi.removeRequestInterceptor(customInterceptor);
+		await restApi.one('test-intercept', 'request').get();
+		test.assert.strictEqual(receivedExpectedHeader, false, 'expected no custom header but it was set');
+	});
+
+	it('can add and remove response interceptors', async () => {
+		const [apiUrl] = await getServer((app) => {
+			app.get('/test-intercept/response', (req, res) => res.end('Hey'));
+		});
+
+		const restApi = restie(apiUrl);
+
+		// define custom interceptor. It's identity is based on it's own signature
+		const customInterceptor = () => ({ charlie: true });
+
+		// TEST: add interceptor
+		restApi.addResponseInterceptor(customInterceptor);
+		const resultWith = await restApi.one('test-intercept', 'response').get();
+		test.assert.strictEqual(resultWith.charlie, true, 'expected custom response flag but none was found');
+
+		// TEST: remove interceptor
+		restApi.removeResponseInterceptor(customInterceptor);
+		const resultWithout = await restApi.one('test-intercept', 'response').get();
+		test.assert.strictEqual(resultWithout.charlie, undefined, 'expected no custom response flag but it was set');
+	});
+
 	// create singleton server
 	before(/* all tests */ () => getServer());
 

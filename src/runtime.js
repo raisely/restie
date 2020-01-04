@@ -37,10 +37,11 @@ const getResultAsBestAttempt = async (rawResponse) => {
  * @return {Promise}                        [description]
  */
 export async function basicRequestHandler(apiRef, { url, ...baseOptions }) {
-	// if a beforeSend/afterSend is present 
-	const options = apiRef.beforeSend ?
-		{ ...baseOptions, ...apiRef.beforeSend(baseOptions) } :
-		baseOptions;
+	const options = { ...baseOptions };
+
+	// progressive mutation based on interceptors
+	apiRef.configuration.requestInterceptors
+		.forEach(hook => Object.assign(options, { ...hook(options) }));
 
 	options.headers = {
 		Accept: 'application/json, text/plain, */*',
@@ -76,7 +77,6 @@ export async function basicRequestHandler(apiRef, { url, ...baseOptions }) {
 	// generate a generic form of the result payload before any post-resolve
 	// code is run.
 	const responsePayload = {
-		data: parsedResponse,
 		headers: options.headers,
 		method: options.method,
 		statusCode: () => rawResponse.status,
@@ -85,18 +85,40 @@ export async function basicRequestHandler(apiRef, { url, ...baseOptions }) {
 
 	// generate the final response depending on our detected request status (failed or good)
 	// and if it's good, make sure we run any post-request code
-	const finalResponse = (apiRef.afterReceive && isGoodResponse) ?
-		{ ...responsePayload, ...apiRef.afterReceive(responsePayload, options) } :
-		responsePayload;
+	const finalResponse = { ...responsePayload };
+
+	const { enforceImmutability } = apiRef.configuration;
+
+	// define data getter (as either mutable or immutable) based on configuration
+	const data = enforceImmutability ? 
+		// enforce immutability by providing a non-mutable reference to the original reponse payload
+		() => JSON.parse(JSON.stringify(parsedResponse)) :
+		// otherwise just return the default reference
+		() => parsedResponse;
+
+	if (!enforceImmutability) {
+		// add mutable shorthand since due to ease of access
+		finalResponse.data = parsedResponse;
+	}
 
 	// add infamously weird shim for restful-js
-	// TODO: add in plugs here for immutable extensions
-	finalResponse.body = () => ({ data: () => responsePayload.data });
+	finalResponse.body = () => ({ data });
 
-	// if we detected a bad response code, make sure we build a request error
-	// and bubble the exception upwards. Restful seems to switch to certain
-	// mutable values here so we'll flatten out any getter/closured values
-	if (!isGoodResponse) {
+	if (isGoodResponse) {
+		// progressive mutation based on interceptors. Don't add any immutatability here since we
+		// can also extend basic functionality here
+		apiRef.configuration.responseInterceptors
+			.forEach(hook => Object.assign(finalResponse, { ...hook(finalResponse, options) }));
+
+		// freeze result (if enabled) to prevent client mutation
+		if (enforceImmutability) {
+			Object.freeze(finalResponse);
+		}
+	} else {
+		// if we detected a bad response code, make sure we build a request error
+		// and bubble the exception upwards. Restful seems to switch to certain
+		// mutable values here so we'll flatten out any getter/closured values
+
 		const error = new Error(rawResponse.statusText);
 		finalResponse.statusCode = rawResponse.status;
 		error.response = finalResponse;

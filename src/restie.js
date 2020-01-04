@@ -2,6 +2,21 @@
 import { basicRequestHandler } from './runtime';
 
 /**
+ * Contractual param check, throws TypeError if strict type mismatch
+ * @param  {String} expectedType The string name of the expected type
+ * @return {Function}            Checking function that throws on mismatch
+ */
+const expectStrictType = expectedType => (value) => {
+	if (typeof value !== expectedType) {
+		throw new TypeError(`expected ${expectedType} but got ${value}`);
+	}
+
+	return true;
+}
+
+const expectFunction = expectStrictType('function');
+
+/**
  * Helper responsible for concatenating 
  * @param  {...String[]} paths Path name parts to concatenate
  * @return {String}          Joined path url
@@ -113,6 +128,12 @@ function buildModel(apiRef, baseUrl, modelBase, parentRef = null) {
 		api: () => apiRef,
 	};
 
+	if (apiRef.configuration.enforceImmutability) {
+		// prevent mutation of the model instance.
+		// typically overkill, but useful in exposed client implmentations
+		Object.freeze(modelInstance);
+	}
+
 	return modelInstance;
 }
 
@@ -145,14 +166,36 @@ function buildDualModel(apiRef, currentRootUrl, modelBase, childModel, topParent
  * @param  {String} baseUrl The source url of the REST api or complex nested resource
  * @return {Object}         Object containing needed restful objects
  */
-const buildRestie = baseUrl => ({
-	baseUrl,
-	url: () => baseUrl,
-	addRequestInterceptor(interceptor) { this.beforeSend = interceptor; },
-	addResponseInterceptor(interceptor) { this.afterReceive = interceptor; },
-	all(modelBase) { return buildModel(this, baseUrl, modelBase); },
-	one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
-	custom(modelBase) { return buildModel(this, baseUrl, modelBase); },
-});
+function buildRestie(baseUrl, userConfig = {}) {
+	// shared configuration bound to the api instance
+	const configuration = {
+		...userConfig,
+		requestInterceptors: new Set(),
+		responseInterceptors: new Set(),
+	};
+
+	const restieApiInstance = {
+		configuration,
+		baseUrl,
+		url: () => baseUrl,
+		addRequestInterceptor: interceptor => expectFunction(interceptor) && configuration.requestInterceptors.add(interceptor),
+		addResponseInterceptor: interceptor => expectFunction(interceptor) && configuration.responseInterceptors.add(interceptor),
+		removeRequestInterceptor: interceptor => configuration.requestInterceptors.delete(interceptor),
+		removeResponseInterceptor: interceptor => configuration.responseInterceptors.delete(interceptor),
+		all(modelBase) { return buildModel(this, baseUrl, modelBase); },
+		one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
+		custom(modelBase) { return buildModel(this, baseUrl, modelBase) },
+	};
+
+	if (configuration.enforceImmutability) {
+		// prevent mutation of the Restie instance
+		Object.freeze(restieApiInstance);
+		// prevent mutation of the configuration values
+		Object.freeze(configuration);
+	}
+
+	// return instance reference
+	return restieApiInstance;
+}
 
 export default buildRestie;
