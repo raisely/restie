@@ -1,6 +1,14 @@
-# Restie
-
-Restie is a restful-js/restangular inspired REST wrapper for `fetch` implementations, but without mutative effects.
+<div align="center">
+  <h1>Restie</h1>
+  <p>
+    <a href="https://github.com/raisely/restie/actions">
+      <img alt="GitHub Workflow Status (branch)" src="https://img.shields.io/github/workflow/status/raisely/restie/main/stable">
+    </a>
+    <img alt="npm (scoped)" src="https://img.shields.io/npm/v/@raisely/restie">
+    <img alt="David" src="https://img.shields.io/david/raisely/restie" />
+  </p>
+  <p>Restie is a restful-js/restangular inspired REST wrapper for <code>fetch</code> implementations, but without mutative effects</p>
+</div>
 
 
 ## Installing
