@@ -111,6 +111,34 @@ describe('runtime', () => {
 		test.assert.strictEqual(resultWithout.charlie, undefined, 'expected no custom response flag but it was set');
 	});
 
+	it('can cache 10K requests (via default flag)', async () => {
+		// use side-effect counter to help determine that we are in fact using cache
+		let counter = 0;
+
+		const [apiUrl] = await getServer((app) => {
+			app.get('/test-caching/request', (req, res) => {
+				res.end(`${counter++}`);
+			});
+		});
+
+		// create cached model
+		const cachedApiModel = restie(apiUrl, { cache: true })
+			.one('test-caching', 'request');
+
+		// make 10K async requests (RIP if caching fails)
+		const requests = [];
+		let totalRequests = 10000;
+		while (totalRequests--) requests.push(cachedApiModel.get());
+ 	
+ 		// wait for the return values (should all be the same number)
+		const results = await Promise.all(requests);
+		results.forEach((r, i) => test.assert.strictEqual(r.data, '0', `the ${i + 1} request made failed caching (resolved with ${r.data})`));
+
+		// make another request, should be a different number
+		const secondResult = (await cachedApiModel.get()).data;
+		test.assert.strictEqual(secondResult, '1');
+	});
+
 	// create singleton server
 	before(/* all tests */ () => getServer());
 
