@@ -121,7 +121,7 @@ function buildModel(apiRef, baseUrl, modelBase, parentRef = null) {
 		// allow recursing
 		all: subModelBase => buildModel(apiRef, modelRoot, subModelBase, modelInstance),
 		// allow recursing but with an additional child specifier
-		one: (modelBase, id) => buildDualModel(apiRef, modelRoot, modelBase, id, modelInstance),
+		one: (subModelBase, id) => buildDualModel(apiRef, modelRoot, subModelBase, id, modelInstance),
 		// allow obtaining parentRef (if exists)
 		parent: () => parentRef,
 		// get a ref to this api (useful if not nested)
