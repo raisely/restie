@@ -71,10 +71,10 @@ function prepareRequest(apiRef, { url, ...baseOptions }) {
  * Request-phase. Consolidation of more intesive operations and results.
  *  -> During memoization, this function is optimally only executed once.
  *  
- * @param  {Object} apiRef  Reference to the parent Restie api object
- * @param  {String} fullUrl The full url to use in the async fetch operation
- * @param  {Object} options The parsed options needed to make the request
- * @return {Promise}        Resolves with object resembling the final payload
+ * @param  {Object} apiRef   Reference to the parent Restie api object
+ * @param  {String} fullUrl  The full url to use in the async fetch operation
+ * @param  {Object} options  The parsed options needed to make the request
+ * @return {Promise<Object>} Resolves with object resembling the final payload
  */
 async function commitRequest(apiRef, fullUrl, options) {
 	// send out the request
@@ -145,7 +145,7 @@ async function commitRequest(apiRef, fullUrl, options) {
  * Generic runtime for making RESTful transactions
  * @param  {Object} apiRef  Reference to the parent Restie api object
  * @param  {Object} options Base (non-processed) options for making the request
- * @return {Promise}        Resolves with object resembling the final payload
+ * @return {Promise<Object>}        Resolves with object resembling the final payload
  * */
 export async function basicRequestHandler(apiRef, options) {
 	// prepare context for the request
