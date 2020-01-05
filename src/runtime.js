@@ -1,5 +1,4 @@
 
-// TODO look for let intensive query serializer?
 import qs from 'qs';
 
 /**
@@ -30,13 +29,14 @@ const getResultAsBestAttempt = async (rawResponse) => {
 };
 
 /**
- * Generic runtime for making RESTful transactions
- * @param  {ApiInstance}    apiRef              The built api instance
- * @param  {String}    options.url         The url to content
- * @param  {...Object} options.baseOptions The configuration option
- * @return {Promise}                        [description]
+ * Pre-request consolidation helper for preparing less intensive data
+ * required for making a request.
+ * @param  {Object}         apiRef              Reference to the parent Restie api object
+ * @param  {String}         options.url         The user provided url to use
+ * @param  {...Object}      options.baseOptions The base unprocessed options
+ * @return {Object}         Object containing the fully generated url and processed options
  */
-export async function basicRequestHandler(apiRef, { url, ...baseOptions }) {
+function prepareRequest(apiRef, { url, ...baseOptions }) {
 	const options = { ...baseOptions };
 
 	// progressive mutation based on interceptors
@@ -64,6 +64,19 @@ export async function basicRequestHandler(apiRef, { url, ...baseOptions }) {
 	const queryAsString = `?${qs.stringify(options.params || {})}`;
 	const fullUrl = url.split('?')[0] + (queryAsString.length > 1 ? queryAsString : '');
 
+	return { options, fullUrl };
+}
+
+/**
+ * Request-phase. Consolidation of more intesive operations and results.
+ *  -> During memoization, this function is optimally only executed once.
+ *  
+ * @param  {Object} apiRef  Reference to the parent Restie api object
+ * @param  {String} fullUrl The full url to use in the async fetch operation
+ * @param  {Object} options The parsed options needed to make the request
+ * @return {Promise}        Resolves with object resembling the final payload
+ */
+async function commitRequest(apiRef, fullUrl, options) {
 	// send out the request
 	const rawResponse = await fetch(fullUrl, options);
 
@@ -126,4 +139,17 @@ export async function basicRequestHandler(apiRef, { url, ...baseOptions }) {
 	}
 
 	return finalResponse;
+}
+
+/**
+ * Generic runtime for making RESTful transactions
+ * @param  {Object} apiRef  Reference to the parent Restie api object
+ * @param  {Object} options Base (non-processed) options for making the request
+ * @return {Promise}        Resolves with object resembling the final payload
+ * */
+export async function basicRequestHandler(apiRef, options) {
+	// prepare context for the request
+	const prepared = prepareRequest(apiRef, options);
+	// send up the request. TODO: memoize
+	return commitRequest(apiRef, prepared.fullUrl, prepared.options);
 }
