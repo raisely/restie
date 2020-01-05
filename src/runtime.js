@@ -69,7 +69,7 @@ function prepareRequest(apiRef, { url, ...baseOptions }) {
 
 /**
  * Request-phase. Consolidation of more intesive operations and results.
- *  -> During memoization, this function is optimally only executed once.
+ *  -> During caching, this function is optimally only executed once.
  *  
  * @param  {Object} apiRef   Reference to the parent Restie api object
  * @param  {String} fullUrl  The full url to use in the async fetch operation
@@ -150,6 +150,36 @@ async function commitRequest(apiRef, fullUrl, options) {
 export async function basicRequestHandler(apiRef, options) {
 	// prepare context for the request
 	const prepared = prepareRequest(apiRef, options);
-	// send up the request. TODO: memoize
-	return commitRequest(apiRef, prepared.fullUrl, prepared.options);
+
+	// generate cache key (if enabled)
+	const cacheKey = apiRef.$cacheStore ?
+		apiRef.configuration.cacheBy(prepared) : null;
+
+	if (!cacheKey) {
+		// send up the request as default
+		return commitRequest(apiRef, prepared.fullUrl, prepared.options);
+	}
+
+	// use cache method	to return existing pending promises if available
+	const existingPromise = apiRef.$cacheStore.get(cacheKey);
+	if (existingPromise) return existingPromise;
+
+	// otherwise build a new one
+	const pendingPromise = commitRequest(apiRef, prepared.fullUrl, prepared.options);
+	// cache the pending promise
+	apiRef.$cacheStore.set(cacheKey, pendingPromise);
+
+	// wait for the pending result
+	try {
+		const finalResponse = await pendingPromise;
+		// remove the promise ref from the store
+		apiRef.$cacheStore.delete(cacheKey);
+		// resolve with the result
+		return finalResponse;
+	} catch (error) {
+		// something went wry, so delete the existing stored key before
+		// bubbling the exception
+		apiRef.$cacheStore.delete(cacheKey);
+		throw error;
+	}
 }

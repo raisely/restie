@@ -169,7 +169,8 @@ function buildDualModel(apiRef, currentRootUrl, modelBase, childModel, topParent
 function buildRestie(baseUrl, userConfig = {}) {
 	// shared configuration bound to the api instance
 	const configuration = {
-		...userConfig,
+		enforceImmutability: userConfig.immutable === true,
+		enabledCache: userConfig.cache === true,
 		requestInterceptors: new Set(),
 		responseInterceptors: new Set(),
 	};
@@ -186,6 +187,18 @@ function buildRestie(baseUrl, userConfig = {}) {
 		one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
 		custom(modelBase) { return buildModel(this, baseUrl, modelBase) },
 	};
+
+	if (configuration.enabledCache) {
+		// add in cache store
+		restieApiInstance.$cacheStore = new Map();
+
+		// determine cache key building function
+		configuration.cacheBy = typeof userConfig.cacheBy === 'function' ?
+			// use user provided cache key
+			userConfig.cacheBy :
+			// use the default (method:url based) calculation
+			({ fullUrl, options }) => `${options.method}:${fullUrl}`;
+	}
 
 	if (configuration.enforceImmutability) {
 		// prevent mutation of the Restie instance
