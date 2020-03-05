@@ -110,7 +110,7 @@ async function commitRequest(apiRef, fullUrl, options) {
 	// and if it's good, make sure we run any post-request code
 	const finalResponse = { ...responsePayload };
 
-	const { enforceImmutability } = apiRef.configuration;
+	const { enforceImmutability, dataKey } = apiRef.configuration;
 
 	// define data getter (as either mutable or immutable) based on configuration
 	const data = enforceImmutability ? 
@@ -126,6 +126,9 @@ async function commitRequest(apiRef, fullUrl, options) {
 
 	// add infamously weird shim for restful-js
 	finalResponse.body = () => ({ data });
+
+	// add result helper for internal use
+	finalResponse.result = () => dataKey ? data()['data'] : data();
 
 	if (isGoodResponse) {
 		// progressive mutation based on interceptors. Don't add any immutatability here since we
