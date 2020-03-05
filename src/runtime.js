@@ -15,8 +15,6 @@ const extractContentTypeFromHeader = (rawContentType) => {
 		.split(';')
 		.map(string => string.trim());
 
-	console.log(rawContentType, parts);
-
 	return parts[0];
 }
 
