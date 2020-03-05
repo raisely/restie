@@ -13,7 +13,7 @@ const buildTestServer = (config) => new Promise((resolve) => {
 			const { port } = instance.server.address();
 
 			instance.jsonResponse = (res, payload, status = 200) => {
-				res.writeHead(status, { 'Content-Type': 'application/json' });
+				res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
 				res.end(JSON.stringify(payload));
 			}
 

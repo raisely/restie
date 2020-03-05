@@ -10,13 +10,23 @@ const typeMap = {
 	'text/plain': 'text',
 };
 
+const extractContentTypeFromHeader = (rawContentType) => {
+	const parts = rawContentType
+		.split(';')
+		.map(string => string.trim());
+
+	console.log(rawContentType, parts);
+
+	return parts[0];
+}
+
 /**
  * Takes a raw fetch response and tries to resolve JSON or plaintext
  * @param  {Response} rawRepsonse Response object from fetch
  * @return {Promise<Object|String|null>}    Resolves with either
  */
 const getResultAsBestAttempt = async (rawResponse) => {
-	const ContentType = rawResponse.headers.get('Content-Type');
+	const ContentType = extractContentTypeFromHeader(rawResponse.headers.get('Content-Type') || '');
 
 	// use response content-type to try and detect parse type
 	const type = typeMap[ContentType] || 'text';
