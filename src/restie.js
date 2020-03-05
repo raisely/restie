@@ -173,6 +173,7 @@ function buildRestie(baseUrl, userConfig = {}) {
 		enabledCache: userConfig.cache === true,
 		requestInterceptors: new Set(),
 		responseInterceptors: new Set(),
+		dataKey: typeof userConfig.dataKey === 'string' ? userConfig.dataKey : null,
 	};
 
 	const restieApiInstance = {
