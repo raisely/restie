@@ -126,10 +126,10 @@ async function commitRequest(apiRef, fullUrl, options) {
 	finalResponse.body = () => ({ data });
 
 	// add result helper for internal use
-	finalResponse.result = () => dataKey ? data()['data'] : data();
+	finalResponse.result = () => dataKey ? data()[dataKey] : data();
 
 	if (isGoodResponse) {
-		// progressive mutation based on interceptors. Don't add any immutatability here since we
+		// progressive mutation based on interceptors. Don't add any immutability here since we
 		// can also extend basic functionality here
 		apiRef.configuration.responseInterceptors
 			.forEach(hook => Object.assign(finalResponse, { ...hook(finalResponse, options) }));
