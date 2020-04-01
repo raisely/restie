@@ -146,6 +146,11 @@ async function commitRequest(apiRef, fullUrl, options) {
 		const error = new Error(rawResponse.statusText);
 		finalResponse.statusCode = rawResponse.status;
 		error.response = finalResponse;
+
+		// Call each error interceptor (if present)
+		apiRef.configuration.errorInterceptors
+			.forEach(hook => hook(error, fullUrl, options));
+
 		throw error;
 	}
 
