@@ -86,7 +86,20 @@ function prepareRequest(apiRef, { url, ...baseOptions }) {
  */
 async function commitRequest(apiRef, fullUrl, options) {
 	// send out the request
-	const rawResponse = await fetch(fullUrl, options);
+	let rawResponse;
+
+	try {
+		rawResponse = await fetch(fullUrl, options);
+	} catch (fatalRequestError) {
+		fatalRequestError.statusCode = 0;
+		fatalRequestError.response = false;
+		// Call each error interceptor (if present)
+
+		apiRef.configuration.errorInterceptors
+			.forEach(hook => hook(fatalRequestError, fullUrl, options));
+
+		throw fatalRequestError;
+	}
 
 	// make a best-effort (safe) guess if the request didn't go so well
 	const isGoodResponse = rawResponse.status >= 200 && rawResponse.status < 300;
