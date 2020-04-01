@@ -1,8 +1,8 @@
 {
   "name": "@raisely/restie",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "REST wrapper for fetch implementations",
-  "main": "dist/restie.js",
+  "main": "dist/restie.dist.js",
   "scripts": {
     "test": "mocha ./spec/*.spec.js",
     "build": "concurrently 'npm:build:*'",
