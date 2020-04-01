@@ -173,6 +173,7 @@ function buildRestie(baseUrl, userConfig = {}) {
 		enabledCache: userConfig.cache === true,
 		requestInterceptors: new Set(),
 		responseInterceptors: new Set(),
+		errorInterceptors: new Set(),
 		dataKey: typeof userConfig.dataKey === 'string' ? userConfig.dataKey : null,
 	};
 
@@ -182,8 +183,10 @@ function buildRestie(baseUrl, userConfig = {}) {
 		url: () => baseUrl,
 		addRequestInterceptor: interceptor => expectFunction(interceptor) && configuration.requestInterceptors.add(interceptor),
 		addResponseInterceptor: interceptor => expectFunction(interceptor) && configuration.responseInterceptors.add(interceptor),
+		addErrorInterceptor: interceptor => expectFunction(interceptor) && configuration.errorInterceptors.add(interceptor),
 		removeRequestInterceptor: interceptor => configuration.requestInterceptors.delete(interceptor),
 		removeResponseInterceptor: interceptor => configuration.responseInterceptors.delete(interceptor),
+		removeErrorInterceptor: interceptor => configuration.errorInterceptors.delete(interceptor),
 		all(modelBase) { return buildModel(this, baseUrl, modelBase); },
 		one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
 		custom(modelBase) { return buildModel(this, baseUrl, modelBase) },

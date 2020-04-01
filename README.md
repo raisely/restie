@@ -147,7 +147,7 @@ yourApi.removeRequestInterceptor(customInterceptor);
 By using response interceptors, it's possible to mutate the the processed result from the remote api before it is succesffuly return to it's calling code.
 
 ```js
-const yourApi = restie('https://yourapi.test')
+const yourApi = restie('https://yourapi.test');
 
 const customInterceptor = (result, options) => ({
     // you can access the current value of the result (i.e data, statusCode)
@@ -162,6 +162,28 @@ yourApi.addResponseInterceptor(customInterceptor);
 
 // removing the interceptor is just as easy (like an event handler)
 yourApi.removeRequestInterceptor(customInterceptor);
+````
+
+
+#### Intercepting errors
+
+By using error interceptors, it's possible to mutate and commit side effects based on errors before they are thrown up
+
+```js
+const yourApi = restie('https://yourapi.test');
+
+const customInterceptor = (error, fullUrl, options) => {
+    // You can intercept errors
+    console.log(error, fullUrl, options);
+    // And also commit mutations
+    error.isVeryBadNoThankYou = true;
+}
+
+// add the interceptor to the restie api.
+yourApi.addErrorInterceptor(customInterceptor);
+
+// removing the interceptor is just as easy (like an event handler)
+yourApi.removeErrorInterceptor(customInterceptor);
 ````
 
 ### Enforcing immutability
