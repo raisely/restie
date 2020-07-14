@@ -171,6 +171,7 @@ function buildRestie(baseUrl, userConfig = {}) {
 	const configuration = {
 		enforceImmutability: userConfig.immutable === true,
 		enabledCache: userConfig.cache === true,
+		cacheTtl: userConfig.cacheTtl,
 		requestInterceptors: new Set(),
 		responseInterceptors: new Set(),
 		errorInterceptors: new Set(),
@@ -192,7 +193,7 @@ function buildRestie(baseUrl, userConfig = {}) {
 		custom(modelBase) { return buildModel(this, baseUrl, modelBase) },
 	};
 
-	if (configuration.enabledCache) {
+	if (configuration.enabledCache || configuration.cacheTTL) {
 		// add in cache store
 		restieApiInstance.$cacheStore = new Map();
 
@@ -202,6 +203,8 @@ function buildRestie(baseUrl, userConfig = {}) {
 			userConfig.cacheBy :
 			// use the default (method:url based) calculation
 			({ fullUrl, options }) => `${options.method}:${fullUrl}`;
+
+		restieApiInstance.$cachedResponses = [];
 	}
 
 	if (configuration.enforceImmutability) {
