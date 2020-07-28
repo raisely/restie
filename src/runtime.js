@@ -92,7 +92,11 @@ async function commitRequest(apiRef, fullUrl, options) {
 	let rawResponse;
 
 	try {
-		rawResponse = await fetch(fullUrl, options);
+		const doFetch = () => fetch(fullUrl, options);
+		// If restie has been built with a queue, add the request to the queue
+		// and wait for it
+		const fetchPromise = apiRef.$queue ? apiRef.$queue.add(doFetch) : doFetch();
+		rawResponse = await fetchPromise;
 	} catch (fatalRequestError) {
 		fatalRequestError.statusCode = 0;
 		fatalRequestError.response = false;

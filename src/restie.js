@@ -1,3 +1,4 @@
+import PQueue from 'p-queue';
 
 import { basicRequestHandler } from './runtime';
 
@@ -191,6 +192,7 @@ function buildRestie(baseUrl, userConfig = {}) {
 		all(modelBase) { return buildModel(this, baseUrl, modelBase); },
 		one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
 		custom(modelBase) { return buildModel(this, baseUrl, modelBase) },
+		setBucketSize(size) { this.$queue.concurrency = size },
 	};
 
 	if (configuration.enabledCache || configuration.cacheTTL) {
@@ -205,6 +207,12 @@ function buildRestie(baseUrl, userConfig = {}) {
 			({ fullUrl, options }) => `${options.method}:${fullUrl}`;
 
 		restieApiInstance.$cachedResponses = [];
+	}
+
+	if (userConfig.bucketSize) {
+		restieApiInstance.$queue = new PQueue({
+			concurrency: userConfig.bucketSize,
+		});
 	}
 
 	if (configuration.enforceImmutability) {
