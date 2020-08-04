@@ -192,7 +192,11 @@ export async function basicRequestHandler(apiRef, options) {
 		return commitRequest(apiRef, prepared.fullUrl, prepared.options);
 	}
 
-	const cachedResponse = apiRef.$cachedResponses.find(r => r.$cacheKey === cacheKey);
+	// Use cached response if Ttl is being used
+	const cachedResponse =
+		apiRef.$cachedResponses &&
+		apiRef.$cachedResponses.find(r => r.$cacheKey === cacheKey);
+
 	if (cachedResponse) {
 		const cacheExpiresAt = new Date().getTime() - apiRef.configuration.cacheTtl;
 		if (cachedResponse.$cachedAt > cacheExpiresAt) {
@@ -224,14 +228,19 @@ export async function basicRequestHandler(apiRef, options) {
 		// Cache the response
 		if (apiRef.configuration.cacheTtl) {
 			console.log('response cached by restie');
+
 			finalResponse.$cacheKey = cacheKey;
 			finalResponse.$cachedAt = new Date().getTime();
+
+			// Add the newly generated response to the cache
 			apiRef.$cachedResponses.push(finalResponse);
+
 			// Limit cache size to 100 elements
 			if (apiRef.$cachedResponses.length > 100) {
 				apiRef.$cachedResponses.shift();
 			}
 		}
+
 		// resolve with the result
 		return finalResponse;
 	} catch (error) {
