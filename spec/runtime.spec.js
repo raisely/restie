@@ -141,42 +141,42 @@ describe('runtime', () => {
 		test.assert.strictEqual((await cachedApiModel.get()).result(), '1');
 	});
 
-	// it('can cache 10K requests (5K -0, 5K -1) (TTL mode)', async function () {
-	// 	this.timeout(5000);
-	//
-	// 	// use side-effect counter to help determine that we are in fact using cache
-	// 	let counter = 0;
-	//
-	// 	const [apiUrl] = await getServer((app) => {
-	// 		app.get('/test-caching/request', (req, res) => {
-	// 			res.end(`${counter++}`);
-	// 		});
-	// 	});
-	//
-	// 	// create cached model
-	// 	const cachedApiModel = restie(apiUrl, {
-	// 		cache: true,
-	// 		cacheTtl: 1000,
-	// 	}).one('test-caching', 'request');
-	//
-	// 	// The first two batches should be performed in sequence to make sure that the Ttl isn't expiring unexpectedly
-	// 	const first = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
-	// 	await pause(900);
-	// 	const second = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
-	//
-	// 	// Wait for TTL to expire
-	// 	await pause(1100);
-	//
-	// 	const third = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
-	// 	await pause(900);
-	// 	const forth = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
-	//
-	// 	// Ensure that batches are caching separately, but also grouped by TTL timeout
-	// 	test.allEqual([...first, ...second], '0',
-	// 		(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
-	// 	test.allEqual([...third, ...forth], '1',
-	// 		(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
-	// });
+	it('can cache 10K requests (5K -0, 5K -1) (TTL mode)', async function () {
+		this.timeout(5000);
+
+		// use side-effect counter to help determine that we are in fact using cache
+		let counter = 0;
+
+		const [apiUrl] = await getServer((app) => {
+			app.get('/test-caching/request', (req, res) => {
+				res.end(`${counter++}`);
+			});
+		});
+
+		// create cached model
+		const cachedApiModel = restie(apiUrl, {
+			cache: true,
+			cacheTtl: 1000,
+		}).one('test-caching', 'request');
+
+		// The first two batches should be performed in sequence to make sure that the Ttl isn't expiring unexpectedly
+		const first = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
+		await pause(900);
+		const second = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
+
+		// Wait for TTL to expire
+		await pause(1100);
+
+		const third = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
+		await pause(900);
+		const forth = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
+
+		// Ensure that batches are caching separately, but also grouped by TTL timeout
+		test.allEqual([...first, ...second], '0',
+			(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
+		test.allEqual([...third, ...forth], '1',
+			(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
+	});
 
 	it('can rate limit batches (10 bucket size @ 500 requests)', async function () {
 		this.timeout(5000);
