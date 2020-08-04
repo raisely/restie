@@ -68,8 +68,11 @@ function prepareRequest(apiRef, { url, ...baseOptions }) {
 		options.body = JSON.stringify(options.data);
 	}
 
+	// Keep keys in alphabetical order
+	const sort = (a, b) => a.localeCompare(b);
+
 	// if query options are present, stringy and append to fetch's url
-	const queryAsString = `?${qs.stringify(options.params || {})}`;
+	const queryAsString = `?${qs.stringify(options.params || {}, { sort })}`;
 	const fullUrl = url.split('?')[0] + (queryAsString.length > 1 ? queryAsString : '');
 
 	return { options, fullUrl };
@@ -89,7 +92,11 @@ async function commitRequest(apiRef, fullUrl, options) {
 	let rawResponse;
 
 	try {
-		rawResponse = await fetch(fullUrl, options);
+		const doFetch = () => fetch(fullUrl, options);
+		// If restie has been built with a queue, add the request to the queue
+		// and wait for it
+		const fetchPromise = apiRef.$queue ? apiRef.$queue.add(doFetch) : doFetch();
+		rawResponse = await fetchPromise;
 	} catch (fatalRequestError) {
 		fatalRequestError.statusCode = 0;
 		fatalRequestError.response = false;
@@ -189,6 +196,24 @@ export async function basicRequestHandler(apiRef, options) {
 		return commitRequest(apiRef, prepared.fullUrl, prepared.options);
 	}
 
+	// Use cached response if Ttl is being used
+	const cachedResponse =
+		apiRef.$cachedResponses &&
+		apiRef.$cachedResponses.find(r => r.$cacheKey === cacheKey);
+
+	if (cachedResponse) {
+		const cacheExpiresAt = new Date().getTime() - apiRef.configuration.cacheTtl;
+		if (cachedResponse.$cachedAt > cacheExpiresAt) {
+			return cachedResponse;
+		}
+
+		// If it's expired, remove it from our cache
+		const index = apiRef.$cachedResponses.indexOf(cachedResponse);
+		if (index > -1) {
+			apiRef.$cachedResponses.splice(index, 1);
+		}
+	}
+
 	// use cache method	to return existing pending promises if available
 	const existingPromise = apiRef.$cacheStore.get(cacheKey);
 	if (existingPromise) return existingPromise;
@@ -203,6 +228,23 @@ export async function basicRequestHandler(apiRef, options) {
 		const finalResponse = await pendingPromise;
 		// remove the promise ref from the store
 		apiRef.$cacheStore.delete(cacheKey);
+
+		// Cache the response
+		if (apiRef.configuration.cacheTtl) {
+			console.log('response cached by restie');
+
+			finalResponse.$cacheKey = cacheKey;
+			finalResponse.$cachedAt = new Date().getTime();
+
+			// Add the newly generated response to the cache
+			apiRef.$cachedResponses.push(finalResponse);
+
+			// Limit cache size to 100 elements
+			if (apiRef.$cachedResponses.length > 100) {
+				apiRef.$cachedResponses.shift();
+			}
+		}
+
 		// resolve with the result
 		return finalResponse;
 	} catch (error) {

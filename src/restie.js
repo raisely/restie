@@ -1,3 +1,4 @@
+import PQueue from 'p-queue';
 
 import { basicRequestHandler } from './runtime';
 
@@ -171,10 +172,12 @@ function buildRestie(baseUrl, userConfig = {}) {
 	const configuration = {
 		enforceImmutability: userConfig.immutable === true,
 		enabledCache: userConfig.cache === true,
+		cacheTtl: userConfig.cacheTtl,
 		requestInterceptors: new Set(),
 		responseInterceptors: new Set(),
 		errorInterceptors: new Set(),
 		dataKey: typeof userConfig.dataKey === 'string' ? userConfig.dataKey : null,
+		initialBucketSize: userConfig.bucketSize,
 	};
 
 	const restieApiInstance = {
@@ -190,9 +193,13 @@ function buildRestie(baseUrl, userConfig = {}) {
 		all(modelBase) { return buildModel(this, baseUrl, modelBase); },
 		one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
 		custom(modelBase) { return buildModel(this, baseUrl, modelBase) },
+		setBucketSize(size) {
+			if (!this.$queue) return;
+			this.$queue.concurrency = size;
+		},
 	};
 
-	if (configuration.enabledCache) {
+	if (configuration.enabledCache || configuration.cacheTtl) {
 		// add in cache store
 		restieApiInstance.$cacheStore = new Map();
 
@@ -202,6 +209,17 @@ function buildRestie(baseUrl, userConfig = {}) {
 			userConfig.cacheBy :
 			// use the default (method:url based) calculation
 			({ fullUrl, options }) => `${options.method}:${fullUrl}`;
+
+		// Also bind cache response storage if applicable
+		if (configuration.cacheTtl) {
+			restieApiInstance.$cachedResponses = [];
+		}
+	}
+
+	if (configuration.initialBucketSize) {
+		restieApiInstance.$queue = new PQueue({
+			concurrency: userConfig.bucketSize,
+		});
 	}
 
 	if (configuration.enforceImmutability) {

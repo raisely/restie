@@ -1,6 +1,6 @@
 {
   "name": "@raisely/restie",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "REST wrapper for fetch implementations",
   "main": "dist/restie.dist.js",
   "scripts": {
@@ -35,5 +35,8 @@
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-terser": "^5.1.2",
     "uuid": "^3.3.3"
+  },
+  "dependencies": {
+    "p-queue": "^6.6.0"
   }
 }
