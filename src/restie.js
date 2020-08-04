@@ -177,6 +177,7 @@ function buildRestie(baseUrl, userConfig = {}) {
 		responseInterceptors: new Set(),
 		errorInterceptors: new Set(),
 		dataKey: typeof userConfig.dataKey === 'string' ? userConfig.dataKey : null,
+		initialBucketSize: userConfig.bucketSize,
 	};
 
 	const restieApiInstance = {
@@ -192,10 +193,13 @@ function buildRestie(baseUrl, userConfig = {}) {
 		all(modelBase) { return buildModel(this, baseUrl, modelBase); },
 		one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
 		custom(modelBase) { return buildModel(this, baseUrl, modelBase) },
-		setBucketSize(size) { this.$queue.concurrency = size },
+		setBucketSize(size) {
+			if (!this.$queue) return;
+			this.$queue.concurrency = size;
+		},
 	};
 
-	if (configuration.enabledCache || configuration.cacheTTL) {
+	if (configuration.enabledCache || configuration.cacheTtl) {
 		// add in cache store
 		restieApiInstance.$cacheStore = new Map();
 
@@ -209,7 +213,7 @@ function buildRestie(baseUrl, userConfig = {}) {
 		restieApiInstance.$cachedResponses = [];
 	}
 
-	if (userConfig.bucketSize) {
+	if (configuration.initialBucketSize) {
 		restieApiInstance.$queue = new PQueue({
 			concurrency: userConfig.bucketSize,
 		});
