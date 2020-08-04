@@ -2,6 +2,12 @@ const restie = require('../dist/restie');
 const test = require('./helpers/assertions');
 const getServer = require('./helpers/testServer')();
 
+const {
+	sendRequestWave,
+	pause,
+	getBatchResults,
+} = require('./helpers/misc');
+
 global.fetch = require('node-fetch');
 
 describe('runtime', () => {
@@ -126,17 +132,81 @@ describe('runtime', () => {
 			.one('test-caching', 'request');
 
 		// make 10K async requests (RIP if caching fails)
-		const requests = [];
-		let totalRequests = 10000;
-		while (totalRequests--) requests.push(cachedApiModel.get());
- 	
  		// wait for the return values (should all be the same number)
-		const results = await Promise.all(requests);
-		results.forEach((r, i) => test.assert.strictEqual(r.data, '0', `the ${i + 1} request made failed caching (resolved with ${r.data})`));
+		const results = getBatchResults(await sendRequestWave(cachedApiModel, 10000));
+		test.allEqual(results, '0',
+			(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
 
 		// make another request, should be a different number
-		const secondResult = (await cachedApiModel.get()).data;
-		test.assert.strictEqual(secondResult, '1');
+		test.assert.strictEqual((await cachedApiModel.get()).result(), '1');
+	});
+
+	// it('can cache 10K requests (5K -0, 5K -1) (TTL mode)', async function () {
+	// 	this.timeout(5000);
+	//
+	// 	// use side-effect counter to help determine that we are in fact using cache
+	// 	let counter = 0;
+	//
+	// 	const [apiUrl] = await getServer((app) => {
+	// 		app.get('/test-caching/request', (req, res) => {
+	// 			res.end(`${counter++}`);
+	// 		});
+	// 	});
+	//
+	// 	// create cached model
+	// 	const cachedApiModel = restie(apiUrl, {
+	// 		cache: true,
+	// 		cacheTtl: 1000,
+	// 	}).one('test-caching', 'request');
+	//
+	// 	// The first two batches should be performed in sequence to make sure that the Ttl isn't expiring unexpectedly
+	// 	const first = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
+	// 	await pause(900);
+	// 	const second = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
+	//
+	// 	// Wait for TTL to expire
+	// 	await pause(1100);
+	//
+	// 	const third = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
+	// 	await pause(900);
+	// 	const forth = getBatchResults(await sendRequestWave(cachedApiModel, 2500));
+	//
+	// 	// Ensure that batches are caching separately, but also grouped by TTL timeout
+	// 	test.allEqual([...first, ...second], '0',
+	// 		(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
+	// 	test.allEqual([...third, ...forth], '1',
+	// 		(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
+	// });
+
+	it('can rate limit batches (10 bucket size @ 500 requests)', async function () {
+		this.timeout(5000);
+
+		// track the toal number of batches
+		let totalBatches = 0;
+
+		// use side-effect counter to help determine that we are in fact using cache
+		const [apiUrl] = await getServer((app) => {
+			// create placeholder to test that bucket
+			let createNewSetTimeout = null;
+
+			app.get('/test-caching/request', (req, res) => {
+				// Use a simple timeout technique to detect a batch reaching the api
+				if (createNewSetTimeout) clearTimeout(createNewSetTimeout);
+				createNewSetTimeout = setTimeout(() => totalBatches++, 10);
+
+				// Give each request a life span of around 80ms
+				setTimeout(() => res.end(`done`), 80);
+			});
+		});
+
+		// create cached model
+		const cachedApiModel = restie(apiUrl, {
+			bucketSize: 10,
+		}).one('test-caching', 'request');
+
+		// The first two batches should be performed in sequence to make sure that the Ttl isn't expiring unexpectedly
+		await sendRequestWave(cachedApiModel, 500);
+		test.assert.strictEqual(totalBatches, 50, `Expected exactly 50 batches to be reported by the api, instead got ${totalBatches}`);
 	});
 
 	// create singleton server
@@ -145,3 +215,4 @@ describe('runtime', () => {
 	// close singleton server
 	after(/* all tests */ () => getServer(app => app.server.close()));
 });
+
