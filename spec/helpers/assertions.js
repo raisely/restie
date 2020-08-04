@@ -28,9 +28,14 @@ function assertShallowSubset(primary, compareTo) {
 	});
 }
 
+function allEqual(items, expectedValue, generateMessage = () => undefined) {
+	items.forEach((currentValue, index) => assert.strictEqual(currentValue, expectedValue, generateMessage(currentValue, index)));
+}
+
 module.exports = {
 	modelHasExpectedShape,
 	modelHasExpectedPath,
 	assertShallowSubset,
+	allEqual,
 	assert,
 }
