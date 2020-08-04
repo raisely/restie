@@ -210,7 +210,10 @@ function buildRestie(baseUrl, userConfig = {}) {
 			// use the default (method:url based) calculation
 			({ fullUrl, options }) => `${options.method}:${fullUrl}`;
 
-		restieApiInstance.$cachedResponses = [];
+		// Also bind cache response storage if applicable
+		if (configuration.cacheTtl) {
+			restieApiInstance.$cachedResponses = [];
+		}
 	}
 
 	if (configuration.initialBucketSize) {
