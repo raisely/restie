@@ -196,21 +196,23 @@ export async function basicRequestHandler(apiRef, options) {
 		return commitRequest(apiRef, prepared.fullUrl, prepared.options);
 	}
 
-	// Use cached response if Ttl is being used
-	const cachedResponse =
+	if (apiRef.configuration.cacheTtl) {
+		// Use cached response if Ttl is being used
+		const cachedResponse =
 		apiRef.$cachedResponses &&
 		apiRef.$cachedResponses.find(r => r.$cacheKey === cacheKey);
 
-	if (cachedResponse) {
-		const cacheExpiresAt = new Date().getTime() - apiRef.configuration.cacheTtl;
-		if (cachedResponse.$cachedAt > cacheExpiresAt) {
-			return cachedResponse;
-		}
+		if (cachedResponse) {
+			const cacheExpiresAt = new Date().getTime() - apiRef.configuration.cacheTtl;
+			if (cachedResponse.$cachedAt > cacheExpiresAt) {
+				return cachedResponse;
+			}
 
-		// If it's expired, remove it from our cache
-		const index = apiRef.$cachedResponses.indexOf(cachedResponse);
-		if (index > -1) {
-			apiRef.$cachedResponses.splice(index, 1);
+			// If it's expired, remove it from our cache
+			const index = apiRef.$cachedResponses.indexOf(cachedResponse);
+			if (index > -1) {
+				apiRef.$cachedResponses.splice(index, 1);
+			}
 		}
 	}
 
@@ -236,12 +238,14 @@ export async function basicRequestHandler(apiRef, options) {
 			finalResponse.$cacheKey = cacheKey;
 			finalResponse.$cachedAt = new Date().getTime();
 
-			// Add the newly generated response to the cache
-			apiRef.$cachedResponses.push(finalResponse);
+			if (apiRef.configuration.cacheTtl) {
+				// Add the newly generated response to the cache
+				apiRef.$cachedResponses.push(finalResponse);
 
-			// Limit cache size to 100 elements
-			if (apiRef.$cachedResponses.length > 100) {
-				apiRef.$cachedResponses.shift();
+				// Limit cache size to 100 elements
+				if (apiRef.$cachedResponses.length > 100) {
+					apiRef.$cachedResponses.shift();
+				}
 			}
 		}
 
