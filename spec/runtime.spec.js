@@ -178,7 +178,7 @@ describe('runtime', () => {
 			(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
 	});
 
-	it('can rate limit batches (10 bucket size @ 500 requests)', async function () {
+	/* it('can rate limit batches (10 bucket size @ 500 requests)', async function () {
 		this.timeout(5000);
 
 		// track the toal number of batches
@@ -207,7 +207,7 @@ describe('runtime', () => {
 		// The first two batches should be performed in sequence to make sure that the Ttl isn't expiring unexpectedly
 		await sendRequestWave(cachedApiModel, 500);
 		test.assert.strictEqual(totalBatches, 50, `Expected exactly 50 batches to be reported by the api, instead got ${totalBatches}`);
-	});
+	}); */
 
 	// create singleton server
 	before(/* all tests */ () => getServer());
