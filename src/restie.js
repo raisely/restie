@@ -197,9 +197,6 @@ function buildRestie(baseUrl, userConfig = {}) {
 			if (!this.$queue) return;
 			this.$queue.concurrency = size;
 		},
-		setCacheTtl(ttl) {
-			configuration.cacheTtl = 0;
-		},
 	};
 
 	if (configuration.enabledCache || configuration.cacheTtl) {
