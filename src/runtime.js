@@ -1,6 +1,8 @@
 
 import qs from 'qs';
 
+import { generateFetch } from './plugin';
+
 /**
  * Global mapping for content types
  * @type {Object}
@@ -92,7 +94,10 @@ async function commitRequest(apiRef, fullUrl, options) {
 	let rawResponse;
 
 	try {
-		rawResponse = await fetch(fullUrl, options);
+		const performFetch = apiRef.configuration.plugins ?
+			generateFetch(fetch, apiRef) : fetch;
+
+		rawResponse = await performFetch(fullUrl, options);
 	} catch (fatalRequestError) {
 		fatalRequestError.statusCode = 0;
 		fatalRequestError.response = false;

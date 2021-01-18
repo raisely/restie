@@ -30,18 +30,7 @@ function determinePluginsFromEnv() {
 		plugins.push(
 			babel({
 				exclude: 'node_modules/**',
-				babelrc: false,
-				presets: [
-					['@babel/env', {
-						targets: {
-							browsers: ['>0.25%', 'not ie 10', 'not op_mini all'],
-						},
-						modules: false
-					}]
-				],
-				plugins: [
-					'babel-plugin-transform-async-to-promises'
-				],
+				// babelrc: false,
 			})
 		);
 	}

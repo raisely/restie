@@ -7,7 +7,7 @@
     "node": "true",
     "browser": true,
     "es6": true,
-    "mocha": true,
+    "mocha": true
   },
   "rules": {
     "no-mixed-spaces-and-tabs": "off",
