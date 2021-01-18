@@ -51,7 +51,6 @@ function determinePluginsFromEnv() {
 
 		plugins.push(
 			terser({
-				sourcemap: true,
 				mangle: true,
 			})
 		);
@@ -66,6 +65,7 @@ module.exports = {
 	output: {
 		file: determineDestFileFromEnv(),
 		format: 'cjs',
+		sourcemap: !avoidMinify,
 	},
 	plugins: determinePluginsFromEnv(),
 }
