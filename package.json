@@ -4,12 +4,15 @@
   "description": "REST wrapper for fetch implementations",
   "main": "dist/restie.dist.js",
   "scripts": {
+    "pretest": "npm run test:build-essentials",
     "test": "mocha ./spec/*.spec.js",
+    "test:build-essentials": "concurrently 'npm run build:no-babel' 'npm run build:plugins'",
     "build": "concurrently 'npm:build:*'",
     "build:babel": "NO_MINIFY=true rollup -c",
     "build:babel:min": "rollup -c",
     "build:no-babel": "NO_MINIFY=true NO_BABEL=true rollup -c",
-    "build:no-babel:min": "NO_BABEL=true rollup -c"
+    "build:no-babel:min": "NO_BABEL=true rollup -c",
+    "build:plugins": "babel src/plugins --out-dir dist/plugins"
   },
   "files": [
     "README.md",
@@ -19,6 +22,7 @@
   "author": "Raisely",
   "homepage": "https://github.com/raisely/restie",
   "devDependencies": {
+    "@babel/cli": "^7.11.6",
     "@babel/core": "^7.7.2",
     "@babel/preset-env": "^7.7.1",
     "babel-eslint": "^10.0.3",

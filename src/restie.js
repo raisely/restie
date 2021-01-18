@@ -1,6 +1,11 @@
 
 import { basicRequestHandler } from './runtime';
 
+import {
+	verifyPlugins,
+	applyPluginsToObject,
+} from './plugin';
+
 /**
  * Contractual param check, throws TypeError if strict type mismatch
  * @param  {String} expectedType The string name of the expected type
@@ -167,6 +172,9 @@ function buildDualModel(apiRef, currentRootUrl, modelBase, childModel, topParent
  * @return {Object}         Object containing needed restful objects
  */
 function buildRestie(baseUrl, userConfig = {}) {
+	const plugins = Array.isArray(userConfig.plugins) ?
+		verifyPlugins(userConfig.plugins) : [];
+
 	// shared configuration bound to the api instance
 	const configuration = {
 		enforceImmutability: userConfig.immutable === true,
@@ -176,7 +184,13 @@ function buildRestie(baseUrl, userConfig = {}) {
 		responseInterceptors: new Set(),
 		errorInterceptors: new Set(),
 		dataKey: typeof userConfig.dataKey === 'string' ? userConfig.dataKey : null,
+		// Define plugins as a configuration subset.
+		plugins,
+		pluginsEnabled: Boolean(userConfig.pluginsEnabled || (plugins && plugins.length > 0)),
 	};
+
+	// Apply mutations from plugins to configuration
+	applyPluginsToObject(configuration, configuration.plugins,'extendConfiguration');
 
 	const restieApiInstance = {
 		configuration,
@@ -188,10 +202,18 @@ function buildRestie(baseUrl, userConfig = {}) {
 		removeRequestInterceptor: interceptor => configuration.requestInterceptors.delete(interceptor),
 		removeResponseInterceptor: interceptor => configuration.responseInterceptors.delete(interceptor),
 		removeErrorInterceptor: interceptor => configuration.errorInterceptors.delete(interceptor),
+		installPlugins(...newPluginsToVerify) {
+			const pluginsToAdd = verifyPlugins(newPluginsToVerify);
+			if (pluginsToAdd.length) plugins.push(...pluginsToAdd);
+			return plugins.length;
+		},
 		all(modelBase) { return buildModel(this, baseUrl, modelBase); },
 		one(modelBase, id) { return buildDualModel(this, baseUrl, modelBase, id); },
 		custom(modelBase) { return buildModel(this, baseUrl, modelBase) },
 	};
+
+	// Apply mutations/overrides from plugins to Restie api instance
+	applyPluginsToObject(restieApiInstance, configuration.plugins, 'extendInstance');
 
 	if (configuration.enabledCache || configuration.cacheTTL) {
 		// add in cache store
