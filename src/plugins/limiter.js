@@ -1,4 +1,4 @@
-const queue = require('neo-async/queue');
+const neoAsync = require('neo-async/async.min');
 
 module.exports = function RateLimiterExtension(options) {
 	/**
@@ -7,7 +7,7 @@ module.exports = function RateLimiterExtension(options) {
 	 */
 	let bucketLimit = options.bucketLimit || 10000;
 
-	const FIFO = queue((item, done) => item()
+	const FIFO = neoAsync.queue((item, done) => item()
 		.then(() => done()).catch(error => done(error)), options.bucketSize || 10, 1);
 
 	return {
