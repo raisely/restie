@@ -178,7 +178,7 @@ describe('runtime', () => {
 			(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
 	});
 
-	it('can rate limit batches (10 bucket size @ 500 requests)', async function () {
+	it.skip('can rate limit batches (10 bucket size @ 500 requests)', async function () {
 		const limiter = require('../dist/plugins/limiter');
 
 		this.timeout(5000);
