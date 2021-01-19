@@ -202,9 +202,16 @@ function buildRestie(baseUrl, userConfig = {}) {
 		removeRequestInterceptor: interceptor => configuration.requestInterceptors.delete(interceptor),
 		removeResponseInterceptor: interceptor => configuration.responseInterceptors.delete(interceptor),
 		removeErrorInterceptor: interceptor => configuration.errorInterceptors.delete(interceptor),
-		installPlugins(...newPluginsToVerify) {
+		installPlugins(newPluginsToVerify) {
+			if (configuration.enforceImmutability) return false;
 			const pluginsToAdd = verifyPlugins(newPluginsToVerify);
-			if (pluginsToAdd.length) plugins.push(...pluginsToAdd);
+			// Skip plugins if none are passed
+			if (!pluginsToAdd.length) return plugins.length;
+			// Register plugins
+			plugins.push(...pluginsToAdd);
+			// Apply plugins
+			applyPluginsToObject(configuration, pluginsToAdd,'extendConfiguration');
+			applyPluginsToObject(this, pluginsToAdd, 'extendInstance');
 			return plugins.length;
 		},
 		all(modelBase) { return buildModel(this, baseUrl, modelBase); },
