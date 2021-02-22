@@ -178,10 +178,12 @@ describe('runtime', () => {
 			(value, index) => `the ${index + 1} request made failed caching (resolved with ${value})`)
 	});
 
-	/* it('can rate limit batches (10 bucket size @ 500 requests)', async function () {
+	it.skip('can rate limit batches (10 bucket size @ 500 requests)', async function () {
+		const limiter = require('../dist/plugins/limiter');
+
 		this.timeout(5000);
 
-		// track the toal number of batches
+		// track the total number of batches
 		let totalBatches = 0;
 
 		// use side-effect counter to help determine that we are in fact using cache
@@ -201,13 +203,47 @@ describe('runtime', () => {
 
 		// create cached model
 		const cachedApiModel = restie(apiUrl, {
-			bucketSize: 10,
+			plugins: [
+				limiter({ bucketSize: 10 })
+			],
 		}).one('test-caching', 'request');
 
 		// The first two batches should be performed in sequence to make sure that the Ttl isn't expiring unexpectedly
 		await sendRequestWave(cachedApiModel, 500);
 		test.assert.strictEqual(totalBatches, 50, `Expected exactly 50 batches to be reported by the api, instead got ${totalBatches}`);
-	}); */
+	});
+
+	it('can use fetch overriding plugins', async function() {
+		const [apiUrl] = await getServer((app) => {
+			app.get('/test', (req, res) => {
+				res.end(`done`);
+			});
+		});
+
+		const result = await restie(apiUrl, {
+			bucketSize: 10,
+			plugins: [
+				{
+					applyToFetch(sender) {
+						return async (options) => {
+							console.log('first plugin');
+							return await sender(options);
+						}
+					},
+				},
+				{
+					applyToFetch(sender) {
+						return async (options) => {
+							console.log('second plugin');
+							return await sender(options);
+						}
+					},
+				}
+			],
+		}).one('test').get();
+
+		test.assert.strictEqual(result.data, 'done');
+	});
 
 	// create singleton server
 	before(/* all tests */ () => getServer());

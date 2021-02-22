@@ -4,12 +4,15 @@
   "description": "REST wrapper for fetch implementations",
   "main": "dist/restie.dist.js",
   "scripts": {
+    "pretest": "npm run test:build-essentials",
     "test": "mocha ./spec/*.spec.js",
+    "test:build-essentials": "concurrently 'npm run build:no-babel' 'npm run build:plugins'",
     "build": "concurrently 'npm:build:*'",
     "build:babel": "NO_MINIFY=true rollup -c",
     "build:babel:min": "rollup -c",
     "build:no-babel": "NO_MINIFY=true NO_BABEL=true rollup -c",
-    "build:no-babel:min": "NO_BABEL=true rollup -c"
+    "build:no-babel:min": "NO_BABEL=true rollup -c",
+    "build:plugins": "babel src/plugins --out-dir dist/plugins"
   },
   "files": [
     "README.md",
@@ -18,22 +21,34 @@
   ],
   "author": "Raisely",
   "homepage": "https://github.com/raisely/restie",
+  "optionalDependencies": {
+    "swr": "^0.4.0",
+    "react": "17.0.1"
+  },
   "devDependencies": {
+    "@babel/cli": "^7.11.6",
     "@babel/core": "^7.7.2",
     "@babel/preset-env": "^7.7.1",
+    "@testing-library/react-hooks": "^5.0.0",
     "babel-eslint": "^10.0.3",
     "babel-plugin-transform-async-to-promises": "^0.8.15",
     "body-parser": "^1.19.0",
     "concurrently": "^5.3.0",
     "cors": "^2.8.5",
     "eslint": "^6.6.0",
+    "jsdom": "^16.4.0",
+    "jsdom-global": "^3.0.2",
     "mocha": "^8.2.1",
     "node-fetch": "^2.6.1",
     "polka": "^0.5.2",
     "qs": "^6.9.1",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
+    "react-test-renderer": "^17.0.1",
     "rollup": "^1.26.3",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-terser": "^7.0.2",
+    "swr": "^0.4.0",
     "uuid": "^3.3.3"
   }
 }
