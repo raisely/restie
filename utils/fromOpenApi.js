@@ -22,13 +22,16 @@ function mapFromOpenApiSchema(schemaToConvert, root = 'api') {
 		// the helper call.
 		const onlyOneMethod = allMethods.length === 1;
 
+		// when dealing with root level endpoints (like /profiles) - ensure that the correct structure is used
+		const rootLevelAll = (rawPathParts.filter(Boolean).length === 1)
+
 		// generate alias
 		allMethods.forEach((method) => {
 			const preferMethodAppend = onlyOneMethod && method !== 'post';
 
 			// generate essential parts for the restie path
-			const structuredParts = convertRawPartsIntoRestiePath(rawPathParts, preferMethodAppend);
-			const appendMethod = generateAppendMethod(method, preferMethodAppend, rawPathParts);
+			const structuredParts = convertRawPartsIntoRestiePath(rawPathParts, preferMethodAppend, rootLevelAll);
+			const appendMethod = generateAppendMethod(method, preferMethodAppend, rawPathParts, rootLevelAll);
 
 			// push to map
 			restieTreeMap.push({
@@ -54,9 +57,15 @@ const isPathParameter = value => value.startsWith('{') && value.endsWith('}');
  * @param pathParts The split apart openapi path
  * @param preferMethodAppend Determines if we should not use an .all(), and instead default to
  *   using generateAppendMethod to generate the last path value
+ * @param rootLevelAll Bypass flag for models that are level with the api root (depth=1)
  * @return {Array<string>} Set of path chunks representing the root Restie chain
  */
-function convertRawPartsIntoRestiePath(pathParts, preferMethodAppend = false) {
+function convertRawPartsIntoRestiePath(pathParts, preferMethodAppend = false, rootLevelAll) {
+	if (rootLevelAll) {
+		// override the default mapping and just return an all representation
+		return [`all('${pathParts[pathParts.length - 1]}')`];
+	}
+
 	// start assembling an array from back to front
 	const processedParts = [];
 
@@ -100,19 +109,23 @@ function convertRawPartsIntoRestiePath(pathParts, preferMethodAppend = false) {
  * @param preferMethodAppend Determines if we should intentioanlly opt for prepending the path
  *   slug if supported
  * @param pathParts The split apart openapi path
+ * @param rootLevelAll Bypass flag for models that are level with the api root (depth=1)
  * @return {string} The method string to be appended
  */
-function generateAppendMethod(method, preferMethodAppend, pathParts) {
+function generateAppendMethod(method, preferMethodAppend, pathParts, rootLevelAll) {
 	const lastPart = pathParts[pathParts.length - 1];
 
+	// Determine if we should skip prepending the method subroot
+	const skipMethodPrepend = !preferMethodAppend || rootLevelAll;
+
 	// Determine if we should not use getAll
-	const isGetAll = method === 'get' && !preferMethodAppend && !isPathParameter(lastPart);
+	const isGetAll = method === 'get' && !skipMethodPrepend && !isPathParameter(lastPart);
 
 	// Start building individual parts of the method call
 	const selectedMethod = isGetAll ? 'getAll' : method;
 	const parts = [`${selectedMethod}(`];
 
-	if (preferMethodAppend) {
+	if (!skipMethodPrepend) {
 		// add the property as a path indicator
 		parts.push(`'${lastPart}', `);
 	}
