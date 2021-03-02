@@ -118,11 +118,8 @@ function generateAppendMethod(method, preferMethodAppend, pathParts, rootLevelAl
 	// Determine if we should skip prepending the method subroot
 	const skipMethodPrepend = !preferMethodAppend || rootLevelAll;
 
-	// Determine if we should not use getAll
-	const isGetAll = method === 'get' && !skipMethodPrepend && !isPathParameter(lastPart);
-
 	// Start building individual parts of the method call
-	const selectedMethod = isGetAll ? 'getAll' : method;
+	const selectedMethod = method;
 	const parts = [`${selectedMethod}(`];
 
 	if (!skipMethodPrepend) {
