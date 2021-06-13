@@ -1,5 +1,9 @@
 
-import {basicRequestHandler, buildErrorResponseObject, buildResponseObject,} from './runtime';
+import {
+	basicRequestHandler,
+	buildErrorResponseObject,
+	buildResponseObject,
+} from './runtime';
 
 import {
 	verifyPlugins,
