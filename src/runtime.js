@@ -81,6 +81,56 @@ function prepareRequest(apiRef, { url, ...baseOptions }) {
 }
 
 /**
+ * Generate a generic form of the result payload before any post-resolve code is run.
+ * @param  {Object}         parsedResponse      The JSON received (as a parsed object)
+ * @param  {Number}         statusCode          The statusCode received
+ * @param  {...Object}      opts.configuration  The apiRef configuration ref
+ * @param  {...Object}      opts.options        The parsed options needed to make the request
+ */
+export function buildResponseObject(parsedResponse, statusCode, { configuration, options }) {
+	const finalResponse = {
+		headers: options.headers,
+		method: options.method,
+		statusCode: () => statusCode,
+		// this is an implementation detail - only needed for interception
+		rawResponse: null,
+	};
+
+	// define data getter (as either mutable or immutable) based on configuration
+	const data = configuration.enforceImmutability ?
+		// enforce immutability by providing a non-mutable reference to the original reponse payload
+		() => JSON.parse(JSON.stringify(parsedResponse)) :
+		// otherwise just return the default reference
+		() => parsedResponse;
+
+	if (!configuration.enforceImmutability) {
+		// add mutable shorthand since due to ease of access
+		finalResponse.data = parsedResponse;
+	}
+
+	// add infamously weird shim for restful-js
+	finalResponse.body = () => ({ data });
+
+	// add result helper for internal use
+	finalResponse.result = () => configuration.dataKey ? data()[configuration.dataKey] : data();
+
+	return finalResponse;
+}
+
+/**
+ * Generate a generic form of the error result payload before any post-resolve code is run.
+ * @param {Object}     finalResponse   The original final response object
+ * @param {String}     statusText      The status text representing the api error
+ * @return {Error}
+ */
+export function buildErrorResponseObject(finalResponse, statusText) {
+	const error = new Error(statusText);
+	finalResponse.statusCode = finalResponse.statusCode();
+	error.response = finalResponse;
+	return error;
+}
+
+/**
  * Request-phase. Consolidation of more intesive operations and results.
  *  -> During caching, this function is optimally only executed once.
  *  
@@ -109,64 +159,31 @@ async function commitRequest(apiRef, fullUrl, options) {
 		throw fatalRequestError;
 	}
 
-	// make a best-effort (safe) guess if the request didn't go so well
-	const isGoodResponse = rawResponse.status >= 200 && rawResponse.status < 300;
-
 	// make a best-attempt effort at resolving a valid JSON/plaintext body from the
 	// REST endpoint
 	const parsedResponse = await getResultAsBestAttempt(rawResponse);
 
-	// generate a generic form of the result payload before any post-resolve
-	// code is run.
-	const responsePayload = {
-		headers: options.headers,
-		method: options.method,
-		statusCode: () => rawResponse.status,
-		rawResponse,
-	};
+	const finalResponse = buildResponseObject(parsedResponse, rawResponse.status, {
+		configuration: apiRef.configuration,
+		options,
+	})
 
-	// generate the final response depending on our detected request status (failed or good)
-	// and if it's good, make sure we run any post-request code
-	const finalResponse = { ...responsePayload };
-
-	const { enforceImmutability, dataKey } = apiRef.configuration;
-
-	// define data getter (as either mutable or immutable) based on configuration
-	const data = enforceImmutability ? 
-		// enforce immutability by providing a non-mutable reference to the original reponse payload
-		() => JSON.parse(JSON.stringify(parsedResponse)) :
-		// otherwise just return the default reference
-		() => parsedResponse;
-
-	if (!enforceImmutability) {
-		// add mutable shorthand since due to ease of access
-		finalResponse.data = parsedResponse;
-	}
-
-	// add infamously weird shim for restful-js
-	finalResponse.body = () => ({ data });
-
-	// add result helper for internal use
-	finalResponse.result = () => dataKey ? data()[dataKey] : data();
-
-	if (isGoodResponse) {
+	// make a best-effort (safe) guess if the request didn't go so well
+	if (rawResponse.status >= 200 && rawResponse.status < 300) {
 		// progressive mutation based on interceptors. Don't add any immutability here since we
 		// can also extend basic functionality here
 		apiRef.configuration.responseInterceptors
 			.forEach(hook => Object.assign(finalResponse, { ...hook(finalResponse, options) }));
 
 		// freeze result (if enabled) to prevent client mutation
-		if (enforceImmutability) {
+		if (apiRef.configuration.enforceImmutability) {
 			Object.freeze(finalResponse);
 		}
 	} else {
 		// if we detected a bad response code, make sure we build a request error
 		// and bubble the exception upwards. Restful seems to switch to certain
 		// mutable values here so we'll flatten out any getter/closured values
-
-		const error = new Error(rawResponse.statusText);
-		finalResponse.statusCode = rawResponse.status;
-		error.response = finalResponse;
+		const error = buildErrorResponseObject(finalResponse, rawResponse.statusText);
 
 		// Call each error interceptor (if present)
 		apiRef.configuration.errorInterceptors
