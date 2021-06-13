@@ -1,5 +1,5 @@
 
-import { basicRequestHandler } from './runtime';
+import {basicRequestHandler, buildErrorResponseObject, buildResponseObject,} from './runtime';
 
 import {
 	verifyPlugins,
@@ -248,6 +248,29 @@ function buildRestie(baseUrl, userConfig = {}) {
 
 	// return instance reference
 	return restieApiInstance;
+}
+
+/**
+ * Will generate a basic representation of a Restie result object
+ * @param  {Object}         responseObject      The expected body (as a parsed object)
+ * @param  {Number}         statusCode          The HTTP statusCode to use
+ * @param  {...Object}      opts.configuration  The apiRef configuration ref
+ * @param  {...Object}      opts.options        The parsed options needed to make the request
+ */
+buildRestie.mockResponse = function mockResponse(responseObject, statusCode, { configuration, options }) {
+	return buildResponseObject(responseObject, statusCode, { configuration, options });
+}
+
+/**
+ * Will generate a basic representation of a Restie error result object
+ * @param  {Object}         responseObject      The expected body (as a parsed object)
+ * @param  {Number}         statusCode          The HTTP statusCode to use
+ * @param  {Number}         statusText          The statusText representing the api error (i.e Not Found)
+ * @param  {...Object}      opts.configuration  The apiRef configuration ref
+ * @param  {...Object}      opts.options        The parsed options needed to make the request
+ */
+buildRestie.mockErrorResponse = function mockErrorResponse(responseObject, statusCode, statusText, { configuration, options }) {
+	return buildErrorResponseObject(buildResponseObject(responseObject, statusCode, { configuration, options }), statusText);
 }
 
 export default buildRestie;
