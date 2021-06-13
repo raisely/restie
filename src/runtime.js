@@ -163,10 +163,14 @@ async function commitRequest(apiRef, fullUrl, options) {
 	// REST endpoint
 	const parsedResponse = await getResultAsBestAttempt(rawResponse);
 
+	// Generate basic response object
 	const finalResponse = buildResponseObject(parsedResponse, rawResponse.status, {
 		configuration: apiRef.configuration,
 		options,
-	})
+	});
+
+	// Attach raw response
+	finalResponse.rawResponse = rawResponse;
 
 	// make a best-effort (safe) guess if the request didn't go so well
 	if (rawResponse.status >= 200 && rawResponse.status < 300) {

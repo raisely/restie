@@ -11,6 +11,24 @@ const {
 global.fetch = require('node-fetch');
 
 describe('runtime', () => {
+	it('has all expected success response values', async () => {
+		const message = 'This is a text response';
+
+		const [apiUrl] = await getServer((app) => {
+			app.get('/send/missingno', (req, res) => {
+				// don't include content-type
+				res.writeHead(200);
+				res.end('This is a text response');
+			});
+		});
+
+		const result = await restie(apiUrl).all('send/missingno').get();
+		test.assert.strictEqual(result.data, message, 'expected same message');
+		test.assert.strictEqual(result.statusCode(), 200, 'expected 200 status code');
+		test.assert.strictEqual(result.method, 'GET', 'expected method GET');
+		test.assert.notStrictEqual(result.rawResponse, null, 'expected not-null rawResponse');
+	});
+
 	it('will fallback to plaintext as needed', async () => {
 		const message = 'This is non JSON';
 
