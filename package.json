@@ -1,6 +1,6 @@
 {
   "name": "@raisely/restie",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "REST wrapper for fetch implementations",
   "main": "dist/restie.dist.js",
   "scripts": {
@@ -22,7 +22,7 @@
   "author": "Raisely",
   "homepage": "https://github.com/raisely/restie",
   "optionalDependencies": {
-    "swr": "^0.4.0",
+    "swr": "^1.0.1",
     "react": "17.0.1"
   },
   "devDependencies": {

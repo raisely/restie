@@ -15,7 +15,7 @@ module.exports = function RestieSWR(useSWR, depends = {}) {
 			modelOrArray : [modelOrArray];
 
 		// Store ref to previous additional args for comparison
-		const additionalArgsString = JSON.stringify(additionalArgsString);
+		const additionalArgsString = JSON.stringify(additionalArgs);
 
 		// Memoize SWR based on the model's base url and additional request
 		// arguments (if present)
